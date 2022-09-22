@@ -212,6 +212,8 @@ void convertRGBtoRGBA(char *rgba, const char* rgb, int width, int height) {
     ddjvu_format_release(format);
     ddjvu_page_release(djvu_page);
 
+    free(imgData);
+
     return image;
 }
 
@@ -317,6 +319,7 @@ void convertRGBtoRGBA(char *rgba, const char* rgb, int width, int height) {
 
     ddjvu_format_release(format);
     ddjvu_page_release(djvu_page);
+    free(imgData);
 
     return image;
 }
