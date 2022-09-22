@@ -12,10 +12,6 @@
 #import <Foundation/Foundation.h>
 #import <Accelerate/Accelerate.h>
 
-static void AVCGDataProviderReleaseDataCallback(void *info, const void *data, size_t size) {
-    if (info) free(info);
-}
-
 void convertRGBtoRGBA(char *rgba, const char* rgb, int width, int height) {
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     vImage_Buffer src = {
@@ -33,7 +29,6 @@ void convertRGBtoRGBA(char *rgba, const char* rgb, int width, int height) {
     };
     vImage_Error vEerror = vImageConvert_RGB888toRGBA8888(&src, NULL, 255, &dest, true, kvImageNoFlags);
     if (vEerror != kvImageNoError) {
-        free(dest.data);
         CGColorSpaceRelease(colorSpace);
         return nil;
     }
@@ -195,28 +190,24 @@ void convertRGBtoRGBA(char *rgba, const char* rgb, int width, int height) {
 
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     int flags = kCGImageAlphaNoneSkipLast;
-    CGDataProviderRef provider = CGDataProviderCreateWithData(imgData, imgData, rect.w*rect.h*8/2, AVCGDataProviderReleaseDataCallback);
-    if (!provider) {
+    CGContextRef gtx = CGBitmapContextCreate(imgData, rect.w, rect.h, 8, rect.w * 4, colorSpace, flags);
+    if (gtx == NULL) {
         ddjvu_format_release(format);
         free(imgData);
         ddjvu_page_release(djvu_page);
         *error = [[NSError alloc] initWithDomain:@"DjvuParser" code:500 userInfo:@{ NSLocalizedDescriptionKey: @"Create CGDataProviderRef has failed" }];
         return NULL;
     }
-
-    int depth = 8;
-
-    CGImageRef imageRef = CGImageCreate(rect.w, rect.h, depth, 32*depth / 8, 4*rect.w, colorSpace, flags, provider, NULL, false, kCGRenderingIntentDefault);
+    CGImageRef imageRef = CGBitmapContextCreateImage(gtx);
     Image *image = nil;
-    CGFloat scale = 1;
-#if AVIF_PLUGIN_MAC
+#if TARGET_OS_OSX
     image = [[NSImage alloc] initWithCGImage:imageRef size:CGSizeZero];
 #else
-    image = [UIImage imageWithCGImage:imageRef scale:scale orientation:UIImageOrientationUp];
+    image = [UIImage imageWithCGImage:imageRef scale:1 orientation: UIImageOrientationUp];
 #endif
 
+    CGImageRelease(imageRef);
     CGColorSpaceRelease(colorSpace);
-    CFRelease(provider);
 
     ddjvu_format_release(format);
     ddjvu_page_release(djvu_page);
@@ -305,28 +296,24 @@ void convertRGBtoRGBA(char *rgba, const char* rgb, int width, int height) {
 
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     int flags = kCGImageAlphaNoneSkipLast;
-    CGDataProviderRef provider = CGDataProviderCreateWithData(imgData, imgData, rect.w*rect.h*8/2, AVCGDataProviderReleaseDataCallback);
-    if (!provider) {
+    CGContextRef gtx = CGBitmapContextCreate(imgData, rect.w, rect.h, 8, rect.w * 4, colorSpace, flags);
+    if (gtx == NULL) {
         ddjvu_format_release(format);
         free(imgData);
         ddjvu_page_release(djvu_page);
         *error = [[NSError alloc] initWithDomain:@"DjvuParser" code:500 userInfo:@{ NSLocalizedDescriptionKey: @"Create CGDataProviderRef has failed" }];
         return NULL;
     }
-
-    int depth = 8;
-
-    CGImageRef imageRef = CGImageCreate(rect.w, rect.h, depth, 32*depth / 8, 4*rect.w, colorSpace, flags, provider, NULL, false, kCGRenderingIntentDefault);
+    CGImageRef imageRef = CGBitmapContextCreateImage(gtx);
     Image *image = nil;
-    CGFloat scale = 1;
-#if AVIF_PLUGIN_MAC
+#if TARGET_OS_OSX
     image = [[NSImage alloc] initWithCGImage:imageRef size:CGSizeZero];
 #else
-    image = [UIImage imageWithCGImage:imageRef scale:scale orientation:UIImageOrientationUp];
+    image = [UIImage imageWithCGImage:imageRef scale:1 orientation: UIImageOrientationUp];
 #endif
 
+    CGImageRelease(imageRef);
     CGColorSpaceRelease(colorSpace);
-    CFRelease(provider);
 
     ddjvu_format_release(format);
     ddjvu_page_release(djvu_page);
