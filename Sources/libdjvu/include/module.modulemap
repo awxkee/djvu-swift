@@ -1,0 +1,5 @@
+module libdjvu {
+    header "config.h"
+    header "DjvuParser.h"
+    export *
+}
