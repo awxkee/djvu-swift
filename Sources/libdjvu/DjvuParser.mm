@@ -249,12 +249,14 @@ void convertRGBtoRGBA(char *rgba, const char* rgb, int width, int height) {
 
     float resizeFactor = 1.0f;
 
-    if (newWidth > newHeight) {
-        newHeight = ((float)maxSideSize/(float)newWidth)*newHeight;
-        newWidth = (unsigned int)maxSideSize;
-    } else {
-        newWidth = ((float)maxSideSize/(float)newHeight)*newWidth;
-        newHeight = (unsigned int)maxSideSize;
+    if (newWidth > maxSideSize && newHeight > maxSideSize) {
+        if (newWidth > newHeight) {
+            newHeight = ((float)maxSideSize/(float)newWidth)*newHeight;
+            newWidth = (unsigned int)maxSideSize;
+        } else {
+            newWidth = ((float)maxSideSize/(float)newHeight)*newWidth;
+            newHeight = (unsigned int)maxSideSize;
+        }
     }
 
     rect.w = newWidth;
