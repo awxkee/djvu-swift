@@ -34,6 +34,14 @@ public class Djvu {
         return try parser.image(forPage: UInt(page), dpi: UInt(dpi), maxSideSize: UInt(maxSideSize))
     }
 
+    public func getPageText(page: Int) throws -> String {
+        return try parser.getPageText(UInt(page))
+    }
+
+    public func dump() throws -> String {
+        return try parser.getDocumentDump()
+    }
+
     public var numberOfPages: Int {
         Int(parser.numberOfPages)
     }

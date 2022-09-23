@@ -11,6 +11,7 @@
 #import "NSString+UUID.h"
 #import <Foundation/Foundation.h>
 #import <Accelerate/Accelerate.h>
+#import "miniexp.h"
 
 void convertRGBtoRGBA(char *rgba, const char* rgb, int width, int height) {
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
@@ -215,6 +216,39 @@ void convertRGBtoRGBA(char *rgba, const char* rgb, int width, int height) {
     free(imgData);
 
     return image;
+}
+
+- (nullable NSString*)getDocumentDump:(NSError *_Nullable * _Nullable)error
+{
+    if (self.numberOfPages == 0) {
+        *error = [[NSError alloc] initWithDomain:@"DjvuParser" code:500 userInfo:@{ NSLocalizedDescriptionKey: @"You're trying to get an image on an invalid document" }];
+        return NULL;
+    }
+    char* r = ddjvu_document_get_dump(document, true);
+
+    if (!r) {
+        *error = [[NSError alloc] initWithDomain:@"DjvuParser" code:500 userInfo:@{ NSLocalizedDescriptionKey: @"Can't create dump for document" }];
+        return NULL;
+    }
+
+    return [NSString stringWithUTF8String: r];
+}
+
+- (nullable NSString*)getPageText:(NSUInteger)page error:(NSError *_Nullable * _Nullable)error
+{
+    if (self.numberOfPages == 0) {
+        *error = [[NSError alloc] initWithDomain:@"DjvuParser" code:500 userInfo:@{ NSLocalizedDescriptionKey: @"You're trying to get an image on an invalid document" }];
+        return NULL;
+    }
+    int pageno = (int)page;
+    char* r = ddjvu_document_get_pagetext_utf8(document, pageno, 0);
+
+    if (!r) {
+        *error = [[NSError alloc] initWithDomain:@"DjvuParser" code:500 userInfo:@{ NSLocalizedDescriptionKey:[NSString stringWithFormat:@"Page %d is not a text", pageno] }];
+        return NULL;
+    }
+
+    return [NSString stringWithUTF8String: r];
 }
 
 - (nullable Image*)imageForPage:(NSUInteger)page dpi:(NSUInteger)dpi maxSideSize:(NSUInteger)maxSideSize error:(NSError *_Nullable * _Nullable)error
