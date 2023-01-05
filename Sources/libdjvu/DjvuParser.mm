@@ -217,8 +217,6 @@ static void DjvuReleaseCGProvider(void* info, const void* buf, size_t sz) {
     ddjvu_format_release(format);
     ddjvu_page_release(djvu_page);
 
-    free(imgData);
-
     return image;
 }
 
@@ -360,7 +358,6 @@ static void DjvuReleaseCGProvider(void* info, const void* buf, size_t sz) {
 
     ddjvu_format_release(format);
     ddjvu_page_release(djvu_page);
-    free(imgData);
 
     return image;
 }
