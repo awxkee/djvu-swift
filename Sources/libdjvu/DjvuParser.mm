@@ -36,6 +36,10 @@ void convertRGBtoRGBA(char *rgba, const char* rgb, int width, int height) {
     CGColorSpaceRelease(colorSpace);
 }
 
+static void DjvuReleaseCGProvider(void* info, const void* buf, size_t sz) {
+    free((void*)buf);
+}
+
 @interface DjvuParser()
 
 @property(nonatomic, assign) NSUInteger numberOfPages;
@@ -154,14 +158,13 @@ void convertRGBtoRGBA(char *rgba, const char* rgb, int width, int height) {
     rect.h = ddjvu_page_get_height (djvu_page) * 100 / dpi;
 
     format = ddjvu_format_create (DDJVU_FORMAT_RGB24, 0, 0);
-    ddjvu_format_set_row_order(format, 1);
-
     if (format == NULL)
     {
         ddjvu_page_release(djvu_page);
         *error = [[NSError alloc] initWithDomain:@"DjvuParser" code:500 userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Create format for page %d was failed", pageno] }];
         return NULL;
     }
+    ddjvu_format_set_row_order(format, 1);
 
     unsigned long rowsize = rect.w * 3;
     
@@ -183,7 +186,7 @@ void convertRGBtoRGBA(char *rgba, const char* rgb, int width, int height) {
     }
 
     unsigned char* imgData = NULL;
-    imgData = (unsigned char*)malloc(rect.w*rect.h*4); //RGBA
+    imgData = (unsigned char*)malloc(rect.w * rect.h * 4 * sizeof(unsigned char)); //RGBA
 
     convertRGBtoRGBA((char*)imgData, (const char*) rgb, rect.w, rect.h);
 
@@ -191,15 +194,15 @@ void convertRGBtoRGBA(char *rgba, const char* rgb, int width, int height) {
 
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     int flags = kCGImageAlphaNoneSkipLast;
-    CGContextRef gtx = CGBitmapContextCreate(imgData, rect.w, rect.h, 8, rect.w * 4, colorSpace, flags);
-    if (gtx == NULL) {
+    CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, imgData, rect.w * rect.h * 4, DjvuReleaseCGProvider);
+    if (provider == NULL) {
         ddjvu_format_release(format);
         free(imgData);
         ddjvu_page_release(djvu_page);
         *error = [[NSError alloc] initWithDomain:@"DjvuParser" code:500 userInfo:@{ NSLocalizedDescriptionKey: @"Create CGDataProviderRef has failed" }];
         return NULL;
     }
-    CGImageRef imageRef = CGBitmapContextCreateImage(gtx);
+    CGImageRef imageRef = CGImageCreate(rect.w, rect.h, 8, 32, rect.w * sizeof(unsigned char) * 4, colorSpace, flags, provider, NULL, false, kCGRenderingIntentDefault);
     Image *image = nil;
 #if TARGET_OS_OSX
     image = [[NSImage alloc] initWithCGImage:imageRef size:CGSizeZero];
@@ -208,6 +211,7 @@ void convertRGBtoRGBA(char *rgba, const char* rgb, int width, int height) {
 #endif
 
     CGImageRelease(imageRef);
+    CGDataProviderRelease(provider);
     CGColorSpaceRelease(colorSpace);
 
     ddjvu_format_release(format);
@@ -297,7 +301,6 @@ void convertRGBtoRGBA(char *rgba, const char* rgb, int width, int height) {
     rect.h = newHeight;
 
     format = ddjvu_format_create (DDJVU_FORMAT_RGB24, 0, 0);
-    ddjvu_format_set_row_order(format, 1);
 
     if (format == NULL)
     {
@@ -305,6 +308,7 @@ void convertRGBtoRGBA(char *rgba, const char* rgb, int width, int height) {
         *error = [[NSError alloc] initWithDomain:@"DjvuParser" code:500 userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Create format for page %d was failed", pageno] }];
         return NULL;
     }
+    ddjvu_format_set_row_order(format, 1);
 
     unsigned long rowsize = rect.w * 3;
 
@@ -334,15 +338,15 @@ void convertRGBtoRGBA(char *rgba, const char* rgb, int width, int height) {
 
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     int flags = kCGImageAlphaNoneSkipLast;
-    CGContextRef gtx = CGBitmapContextCreate(imgData, rect.w, rect.h, 8, rect.w * 4, colorSpace, flags);
-    if (gtx == NULL) {
+    CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, imgData, rect.w * rect.h * 4, DjvuReleaseCGProvider);
+    if (provider == NULL) {
         ddjvu_format_release(format);
         free(imgData);
         ddjvu_page_release(djvu_page);
         *error = [[NSError alloc] initWithDomain:@"DjvuParser" code:500 userInfo:@{ NSLocalizedDescriptionKey: @"Create CGDataProviderRef has failed" }];
         return NULL;
     }
-    CGImageRef imageRef = CGBitmapContextCreateImage(gtx);
+    CGImageRef imageRef = CGImageCreate(rect.w, rect.h, 8, 32, rect.w * sizeof(unsigned char) * 4, colorSpace, flags, provider, NULL, false, kCGRenderingIntentDefault);
     Image *image = nil;
 #if TARGET_OS_OSX
     image = [[NSImage alloc] initWithCGImage:imageRef size:CGSizeZero];
@@ -351,6 +355,7 @@ void convertRGBtoRGBA(char *rgba, const char* rgb, int width, int height) {
 #endif
 
     CGImageRelease(imageRef);
+    CGDataProviderRelease(provider);
     CGColorSpaceRelease(colorSpace);
 
     ddjvu_format_release(format);
