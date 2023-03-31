@@ -60,6 +60,17 @@ static void DjvuReleaseCGProvider(void* info, const void* buf, size_t sz) {
     }
 }
 
+-(void)close {
+    if (document) {
+        ddjvu_document_release(document);
+        document = nullptr;
+    }
+    if (ctx) {
+        ddjvu_context_release(ctx);
+        ctx = nullptr;
+    }
+}
+
 - (void)handle:(int)wait
 {
     const ddjvu_message_t *msg;

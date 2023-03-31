@@ -36,5 +36,6 @@
 - (nullable Image*)imageForPage:(NSUInteger)page dpi:(NSUInteger)dpi maxSideSize:(NSUInteger)maxSideSize error:(NSError *_Nullable * _Nullable)error;
 - (nullable NSString*)getPageText:(NSUInteger)page error:(NSError *_Nullable * _Nullable)error;
 - (nullable NSString*)getDocumentDump:(NSError *_Nullable * _Nullable)error;
+- (void)close;
 
 @end

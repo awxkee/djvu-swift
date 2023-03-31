@@ -10,3 +10,5 @@ let image: UIImage = try! djvu.getImage(page: 12, dpi: 320)
 // or display djvu page in thumbnail
 let image: UIImage = try! djvu.getImage(page: 12, dpi: 320, maxSideSize: 640)
 ```
+
+## Library is not thread safe, so all access must be isolated

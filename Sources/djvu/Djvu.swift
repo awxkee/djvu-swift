@@ -42,6 +42,10 @@ public class Djvu {
         return try parser.getDocumentDump()
     }
 
+    public func close() {
+        parser.close()
+    }
+
     public var numberOfPages: Int {
         Int(parser.numberOfPages)
     }
