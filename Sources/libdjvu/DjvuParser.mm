@@ -54,9 +54,11 @@ static void DjvuReleaseCGProvider(void* info, const void* buf, size_t sz) {
 - (void)dealloc {
     if (document) {
         ddjvu_document_release(document);
+        document = nullptr;
     }
     if (ctx) {
         ddjvu_context_release(ctx);
+        ctx = nullptr;
     }
 }
 
@@ -107,6 +109,7 @@ static void DjvuReleaseCGProvider(void* info, const void* buf, size_t sz) {
                                                  FALSE);
     if (!document) {
         ddjvu_context_release(ctx);
+        ctx = nullptr;
         *error = [[NSError alloc] initWithDomain:@"DjvuParser" code:500 userInfo:@{ NSLocalizedDescriptionKey: @"Cannot open document" }];
         return NULL;
     }
@@ -114,8 +117,12 @@ static void DjvuReleaseCGProvider(void* info, const void* buf, size_t sz) {
     while (!ddjvu_document_decoding_done(document))
         [self handle:TRUE];
     if (ddjvu_document_decoding_error(document)) {
-        ddjvu_document_release(document);
+        if (document) {
+            ddjvu_document_release(document);
+        }
+        document = nullptr;
         ddjvu_context_release(ctx);
+        ctx = nullptr;
         *error = [[NSError alloc] initWithDomain:@"DjvuParser" code:500 userInfo:@{ NSLocalizedDescriptionKey: @"Cannot open document" }];
         return NULL;
     }
