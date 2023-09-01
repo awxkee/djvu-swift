@@ -13,31 +13,34 @@
 #import <Accelerate/Accelerate.h>
 #import "miniexp.h"
 
-void convertRGBtoRGBA(char *rgba, const char* rgb, int width, int height) {
+bool convertRGBtoRGBA(char *rgba, const char* rgb, int width, int height) {
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     vImage_Buffer src = {
         .data = (void*)(rgb),
-        .width = width,
-        .height = height,
-        .rowBytes = width * 3
+        .width = static_cast<vImagePixelCount>(width),
+        .height = static_cast<vImagePixelCount>(height),
+        .rowBytes = static_cast<size_t>(width * 3)
     };
 
     vImage_Buffer dest = {
         .data = rgba,
-        .width = width,
-        .height = height,
-        .rowBytes = width * 4
+        .width = static_cast<vImagePixelCount>(width),
+        .height = static_cast<vImagePixelCount>(height),
+        .rowBytes = static_cast<size_t>(width * 4)
     };
     vImage_Error vEerror = vImageConvert_RGB888toRGBA8888(&src, NULL, 255, &dest, true, kvImageNoFlags);
     if (vEerror != kvImageNoError) {
-        CGColorSpaceRelease(colorSpace);
-        return nil;
+        return false;
     }
-    CGColorSpaceRelease(colorSpace);
+    return true;
 }
 
 static void DjvuReleaseCGProvider(void* info, const void* buf, size_t sz) {
     free((void*)buf);
+}
+
+static void DjvuReleaseUnsignedPtr(unsigned char* info) {
+    free((void*)info);
 }
 
 @interface DjvuParser()
@@ -186,7 +189,7 @@ static void DjvuReleaseCGProvider(void* info, const void* buf, size_t sz) {
 
     unsigned long rowsize = rect.w * 3;
     
-    unsigned char* rgb = (unsigned char*)malloc(rect.w*rect.h*3);
+    std::shared_ptr<unsigned char> rgbPtr(static_cast<unsigned char*>(malloc(rect.w*rect.h*3)), DjvuReleaseUnsignedPtr);
 
     int rs = ddjvu_page_render (djvu_page,
                                 DDJVU_RENDER_COLOR,
@@ -194,9 +197,8 @@ static void DjvuReleaseCGProvider(void* info, const void* buf, size_t sz) {
                                 &rect,
                                 format,
                                 rowsize,
-                                (char *)rgb);
+                                (char *)rgbPtr.get());
     if (!rs) {
-        free(rgb);
         ddjvu_format_release(format);
         ddjvu_page_release(djvu_page);
         *error = [[NSError alloc] initWithDomain:@"DjvuParser" code:500 userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Render page %d was failed", pageno] }];
@@ -206,9 +208,12 @@ static void DjvuReleaseCGProvider(void* info, const void* buf, size_t sz) {
     unsigned char* imgData = NULL;
     imgData = (unsigned char*)malloc(rect.w * rect.h * 4 * sizeof(unsigned char)); //RGBA
 
-    convertRGBtoRGBA((char*)imgData, (const char*) rgb, rect.w, rect.h);
-
-    free(rgb);
+    if (!convertRGBtoRGBA((char*)imgData, (const char*) rgbPtr.get(), rect.w, rect.h)) {
+        ddjvu_format_release(format);
+        ddjvu_page_release(djvu_page);
+        *error = [[NSError alloc] initWithDomain:@"DjvuParser" code:500 userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Render page %d was failed", pageno] }];
+        return nil;
+    }
 
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     int flags = kCGImageAlphaNoneSkipLast;

@@ -40,5 +40,6 @@ let package = Package(
         .testTarget(
             name: "djvu-swiftTests",
             dependencies: ["djvu"]),
-    ]
+    ],
+    cxxLanguageStandard: .cxx20
 )

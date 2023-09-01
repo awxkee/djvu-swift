@@ -7,7 +7,6 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <UIKit/UIKit.h>
 
 #if !TARGET_OS_IPHONE && !TARGET_OS_IOS && !TARGET_OS_TV && !TARGET_OS_WATCH
     #define DJVU_PLUGIN_MAC 1
@@ -15,7 +14,7 @@
     #define DJVU_PLUGIN_MAC 0
 #endif
 
-#if AVIF_PLUGIN_MAC
+#if DJVU_PLUGIN_MAC
 #import <AppKit/AppKit.h>
 #define Image   NSImage
 #else

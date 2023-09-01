@@ -6,7 +6,9 @@
 //
 
 import Foundation
+#if canImport(libdjvu)
 import libdjvu
+#endif
 #if !os(macOS)
 import UIKit.UIImage
 import UIKit.UIColor
