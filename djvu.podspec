@@ -4,7 +4,7 @@ Pod::Spec.new do |s|
     s.summary          = 'DJVU parser for iOS and MacOS'
     s.description      = 'Provides support for DJVU files in iOS and MacOS'
     s.homepage         = 'https://github.com/awxkee/djvu-swift'
-    s.license          = { :type => 'CC0', :file => 'LICENSE' }
+    s.license          = { :type => 'CC0', :file => 'LICENSE.md' }
     s.author           = { 'username' => 'radzivon.bartoshyk@proton.me' }
     s.source           = { :git => 'https://github.com/awxkee/djvu-swift.git', :tag => "#{s.version}" }
     s.ios.deployment_target = '11.0'
